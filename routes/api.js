@@ -8,39 +8,67 @@ const commentController = require("../controllers/commentController");
 
 /* GET home page. */
 router.get("/", function (req, res, next) {
-    res.send("Not implemented yet");
+    res.send("API");
 });
 
 // AUTH ROUTES
 
 router.post("/login", authController.login);
 
-router.post("/signup", authController.signup);
-
 router.post("/logout", authController.logout);
 
 // USER ROUTES
 
-router.get("/users", userController.getAllUsers);
+router.get("/users", authController.verifyToken, userController.getAllUsers);
 
-router.get("/users/:userId", userController.getUser);
+router.post("/users", userController.createUser);
+
+router.get(
+    "/users/:userId",
+    authController.verifyToken,
+    userController.getUser
+);
+
+// Update and delete users?
 
 // POST ROUTES
 
 router.get("/posts", postController.getAllPosts);
 
-router.post("/posts", postController.createPost);
+router.post("/posts", authController.verifyToken, postController.createPost);
 
-router.get("/posts/:postId", postController.getPost);
+router.get(
+    "/posts/:postId",
+    authController.verifyToken,
+    postController.getPost
+);
 
-router.put("/posts/:postId/update", postController.updatePost);
+router.put(
+    "/posts/:postId",
+    authController.verifyToken,
+    postController.updatePost
+);
 
-router.delete("/posts/:postId", postController.deletePost);
+router.delete(
+    "/posts/:postId",
+    authController.verifyToken,
+    postController.deletePost
+);
 
 // COMMENT ROUTES
 
-router.get("/posts/:postId/comments", commentController.getAllPostComments);
+router.get(
+    "/posts/:postId/comments",
+    authController.verifyToken,
+    commentController.getAllPostComments
+);
 
-router.post("/posts/:postId/comments".commentController.createPostComment);
+router.post(
+    "/posts/:postId/comments",
+    authController.verifyToken,
+    commentController.createPostComment
+);
+
+// Delete comments?
 
 module.exports = router;
