@@ -3,12 +3,12 @@ const Schema = mongoose.Schema;
 const { DateTime } = require("luxon");
 
 const postSchema = new Schema({
-    title: { type: String, required },
-    content: { type: String, required },
-    user: { type: Schema.Types.ObjectId, ref: "User", required },
+    title: { type: String, required: true },
+    content: { type: String, required: true },
+    user: { type: Schema.Types.ObjectId, ref: "User", required: true },
     published: { type: Boolean, default: false },
     comments: [{ type: Schema.Types.ObjectId, ref: "Comment" }],
-    timeStamp: { type: Date, default: Date.now, required },
+    timeStamp: { type: Date, default: Date.now, required: true },
 });
 // Might add likes at a later time
 
