@@ -25,14 +25,13 @@ exports.createPost = [
         .trim()
         .isLength({ min: 1 })
         .escape(),
-    body("published").escape(),
     asyncHandler(async (req, res, next) => {
         const errors = validationResult(req);
 
         const post = new Post({
             title: req.body.title,
             content: req.body.content,
-            published: req.body.published,
+            published: true,
         });
 
         if (!errors.isEmpty()) {
