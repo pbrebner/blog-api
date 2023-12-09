@@ -17,7 +17,7 @@ exports.getAllPostComments = asyncHandler(async (req, res, next) => {
 });
 
 exports.createPostComment = [
-    body("comment", "Comment cannot be empty")
+    body("content", "Comment cannot be empty")
         .trim()
         .isLength({ min: 1, max: 80 })
         .escape(),
@@ -25,14 +25,14 @@ exports.createPostComment = [
         const errors = validationResult(req);
 
         const comment = new Comment({
-            comment: req.body.comment,
+            content: req.body.content,
             user: req.user._id,
             postId: req.params.postId,
         });
 
         if (!errors.isEmpty()) {
             res.status(400).json({
-                comment: req.body.comment,
+                comment: req.body.content,
                 errors: errors.array(),
             });
             return;
