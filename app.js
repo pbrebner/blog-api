@@ -6,27 +6,25 @@ const path = require("path");
 const passport = require("passport");
 const cookieParser = require("cookie-parser");
 const logger = require("morgan");
+const cors = require("cors");
 
 const indexRouter = require("./routes/index");
 const apiRouter = require("./routes/api");
 
-const compression = require("compression");
-const helmet = require("helmet");
+//const compression = require("compression");
 
 const app = express();
 
-// Set up rate limiter: maximum of twenty requests per minute
-const RateLimit = require("express-rate-limit");
-const limiter = RateLimit({
-    windowMs: 1 * 60 * 1000, // 1 minute
-    max: 30,
-});
-// Apply rate limiter to all requests
-app.use(limiter);
+app.use(cors());
 
-// Add helmet to the middleware chain.
-// Set CSP headers to allow our Bootstrap and Jquery to be served
-app.use(helmet);
+// Set up rate limiter: maximum of twenty requests per minute
+//const RateLimit = require("express-rate-limit");
+//const limiter = RateLimit({
+//    windowMs: 1 * 60 * 1000, // 1 minute
+//    max: 30,
+//});
+// Apply rate limiter to all requests
+//app.use(limiter);
 
 // Set up mongoose connection
 const mongoose = require("mongoose");
@@ -38,12 +36,16 @@ async function main() {
     await mongoose.connect(mongoDB);
 }
 
+// view engine setup
+app.set("views", path.join(__dirname, "views"));
+app.set("view engine", "pug");
+
 app.use(passport.initialize());
 app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(compression()); // Compress all routes
+//app.use(compression()); // Compress all routes
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/", indexRouter);
