@@ -17,9 +17,9 @@ exports.getAllPostComments = asyncHandler(async (req, res, next) => {
 });
 
 exports.createPostComment = [
-    body("content", "Comment cannot be empty")
+    body("content", "Comment has to be between 1 and 140 characters")
         .trim()
-        .isLength({ min: 1, max: 80 })
+        .isLength({ min: 1, max: 140 })
         .escape(),
     asyncHandler(async (req, res, next) => {
         const errors = validationResult(req);
@@ -32,15 +32,15 @@ exports.createPostComment = [
 
         if (!errors.isEmpty()) {
             res.status(400).json({
-                comment: req.body.content,
+                content: req.body.content,
                 errors: errors.array(),
             });
             return;
         } else {
+            await comment.save();
             await Post.findByIdAndUpdate(req.params.postId, {
                 $push: { comments: comment },
             });
-            await comment.save();
             res.json({ message: "Comment saved successfully" });
         }
     }),

@@ -16,12 +16,13 @@ exports.getAllPosts = asyncHandler(async (req, res, next) => {
     }
 });
 
+// TODO: Add way to save and/or publish the article
 exports.createPost = [
     body("title", "Posts must include a title")
         .trim()
         .isLength({ min: 1 })
         .escape(),
-    body("content", "Post must have some content")
+    body("content", "Post must contain some content")
         .trim()
         .isLength({ min: 1 })
         .escape(),
@@ -31,6 +32,7 @@ exports.createPost = [
         const post = new Post({
             title: req.body.title,
             content: req.body.content,
+            user: req.user._id,
             published: true,
         });
 
@@ -50,7 +52,7 @@ exports.createPost = [
 ];
 
 exports.getPost = asyncHandler(async (req, res, next) => {
-    const post = Post.findOne({ _id: req.params.postId })
+    const post = await Post.findOne({ _id: req.params.postId })
         .populate("comments")
         .exec();
 
