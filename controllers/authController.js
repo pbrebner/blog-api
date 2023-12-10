@@ -4,7 +4,6 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 const asyncHandler = require("express-async-handler");
-const { body, validationResult } = require("express-validator");
 
 const User = require("../models/user");
 
@@ -12,7 +11,7 @@ const User = require("../models/user");
 passport.use(
     new LocalStrategy(async (username, password, done) => {
         try {
-            const user = await User.findOne({ email: username });
+            const user = await User.findOne({ username: username });
 
             if (!user) {
                 return done(null, false, { message: "Incorrect username" });
@@ -35,7 +34,7 @@ exports.verifyToken = (req, res, next) => {
     const token = authHeader && authHeader.split(" ")[1];
 
     if (token == null) {
-        return res.sendStatus(401);
+        return res.status(401).json({ message: "No token" });
     }
 
     req.token = token;
@@ -43,7 +42,7 @@ exports.verifyToken = (req, res, next) => {
     // Could also verify for the individual routes and provide info as required
     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
         if (err) {
-            return res.sendStatus(403);
+            return res.status(403).json({ message: "Invalid Token" });
         }
 
         req.user = user;
@@ -52,12 +51,13 @@ exports.verifyToken = (req, res, next) => {
 };
 
 exports.login = [
+    //TODO: Need to figure out a way to display the error messages during login auth
+
     //Authenticate login
-    passport.authenticate("local", { session: false }, (err, user, info) => {
-        if (err || !user) {
-            return res.status(403).json({ info });
-        }
+    passport.authenticate("local", {
+        session: false,
     }),
+
     // Function to create token
     asyncHandler(async (req, res, next) => {
         const user = await User.findOne(
@@ -65,21 +65,26 @@ exports.login = [
             "name username memberStatus adminStatus"
         ).exec();
 
+        /*
         // Create Token
         jwt.sign(
-            user,
+            { user: user },
             process.env.ACCESS_TOKEN_SECRET,
-            { expiresIn: "12h" }, // Set for 12h as I haven't implemented a way to refresh token
             (err, token) => {
-                if (err) {
+                if (Object.keys(err).length > 0) {
                     return res
                         .status(401)
-                        .json({ message: "Error creating token" });
+                        .json({ message: "Error creating token", error: err });
                 }
 
-                res.json({ token });
+                res.json({ token: token });
             }
         );
+        */
+
+        // Create Token
+        const token = jwt.sign({ user: user }, process.env.ACCESS_TOKEN_SECRET);
+        res.json({ token: token });
     }),
 ];
 
