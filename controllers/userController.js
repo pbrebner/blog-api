@@ -1,4 +1,6 @@
 const User = require("../models/user");
+const Post = require("../models/post");
+const Comment = require("../models/comment");
 
 const asyncHandler = require("express-async-handler");
 const { body, validationResult } = require("express-validator");
@@ -93,5 +95,38 @@ exports.getUser = asyncHandler(async (req, res, next) => {
         res.status(404).json({ error: "User not found" });
     } else {
         res.json(user);
+    }
+});
+
+exports.updateUser = asyncHandler(async (req, res, next) => {
+    const user = await User.findByIdAndUpdate(req.params.userId, {
+        name: req.body.name,
+        username: req.body.username,
+    });
+
+    if (!user) {
+        return res
+            .status(404)
+            .json({ error: `No user with id ${req.params.userId} exists` });
+    } else {
+        res.json({ message: "User updated successfully", user: req.body.name });
+    }
+});
+
+exports.deleteUser = asyncHandler(async (req, res, next) => {
+    const user = await User.findByIdAndDelete(req.params.userId);
+
+    if (!user) {
+        return res
+            .status(404)
+            .json({ error: `No user with id ${req.params.userId} exists` });
+    } else {
+        const posts = await Post.deleteMany({ user: req.params.userId });
+        const comments = await Comment.deleteMany({ user: req.params.userId });
+        res.json({
+            message: "User deleted successfully",
+            posts: posts,
+            comments: comments,
+        });
     }
 });

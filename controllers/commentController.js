@@ -45,3 +45,15 @@ exports.createPostComment = [
         }
     }),
 ];
+
+exports.deleteComment = asyncHandler(async (req, res, next) => {
+    const comment = await Comment.findByIdAndDelete(req.params.commentId);
+
+    if (!comment) {
+        return res.status(404).json({
+            error: `No comment with id ${req.params.commentId} exists`,
+        });
+    } else {
+        res.json({ message: "Comment deleted successfully", comment: comment });
+    }
+});

@@ -1,4 +1,5 @@
 const Post = require("../models/post");
+const Comment = require("../models/comment");
 
 const asyncHandler = require("express-async-handler");
 const { body, validationResult } = require("express-validator");
@@ -65,14 +66,29 @@ exports.getPost = asyncHandler(async (req, res, next) => {
 });
 
 exports.updatePost = asyncHandler(async (req, res, next) => {
-    // Update with body title, text, and/or published
-    // const post = Post.findByIdAndUpdate(req.params.postId);
+    const post = await Post.findByIdAndUpdate(req.params.postId, {
+        title: req.body.title,
+        content: req.body.content,
+    });
 
-    res.json({ message: "Not Implemented yet" });
+    if (!post) {
+        return res
+            .status(404)
+            .json({ error: `No post with id ${req.params.postId} exists` });
+    } else {
+        res.json({ message: "Post updated successfully", post: post });
+    }
 });
 
 exports.deletePost = asyncHandler(async (req, res, next) => {
-    //const post = Post.findByIdAndDelete(req.params.postId);
+    const post = await Post.findByIdAndDelete(req.params.postId);
 
-    res.json({ message: "Not Implemented yet" });
+    if (!post) {
+        return res
+            .status(404)
+            .json({ error: `No post with id ${req.params.postId} exists` });
+    } else {
+        const comment = await Comment.deleteMany({ postId: req.params.postId });
+        res.json({ message: "Post deleted successfully", post: post });
+    }
 });

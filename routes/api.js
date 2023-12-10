@@ -29,7 +29,17 @@ router.get(
     userController.getUser
 );
 
-// Update and delete users?
+router.put(
+    "/users/:userId",
+    authController.verifyToken,
+    userController.updateUser
+);
+
+router.delete(
+    "/users/:userId",
+    authController.verifyToken,
+    userController.deleteUser
+);
 
 // POST ROUTES
 
@@ -61,6 +71,10 @@ router.post(
     commentController.createPostComment
 );
 
-// Delete comments?
+router.delete(
+    "/posts/:postId/comments/commentId",
+    authController.verifyToken,
+    commentController.deleteComment
+);
 
 module.exports = router;
