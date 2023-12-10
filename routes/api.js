@@ -19,7 +19,7 @@ router.post("/logout", authController.logout);
 
 // USER ROUTES
 
-router.get("/users", authController.verifyToken, userController.getAllUsers);
+router.get("/users", userController.getAllUsers);
 
 router.post("/users", userController.createUser);
 
@@ -37,11 +37,7 @@ router.get("/posts", postController.getAllPosts);
 
 router.post("/posts", authController.verifyToken, postController.createPost);
 
-router.get(
-    "/posts/:postId",
-    authController.verifyToken,
-    postController.getPost
-);
+router.get("/posts/:postId", postController.getPost);
 
 router.put(
     "/posts/:postId",
@@ -57,11 +53,7 @@ router.delete(
 
 // COMMENT ROUTES
 
-router.get(
-    "/posts/:postId/comments",
-    authController.verifyToken,
-    commentController.getAllPostComments
-);
+router.get("/posts/:postId/comments", commentController.getAllPostComments);
 
 router.post(
     "/posts/:postId/comments",
