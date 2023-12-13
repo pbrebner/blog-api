@@ -6,6 +6,7 @@ const { body, validationResult } = require("express-validator");
 
 exports.getAllPosts = asyncHandler(async (req, res, next) => {
     const posts = await Post.find()
+        .populate("user")
         .sort({ timeStamp: 1 })
         .limit(10) // Limit to 10 for now
         .exec();
