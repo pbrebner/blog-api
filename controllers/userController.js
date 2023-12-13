@@ -7,7 +7,9 @@ const { body, validationResult } = require("express-validator");
 const bcrypt = require("bcryptjs");
 
 exports.getAllUsers = asyncHandler(async (req, res, next) => {
-    const users = await User.find({}, "name posts").populate("posts").exec();
+    const users = await User.find({}, "name posts timeStampFormatted")
+        .populate("posts")
+        .exec();
 
     if (!users) {
         res.status(404).json({ error: "No entries found in database" });
@@ -85,7 +87,7 @@ exports.createUser = [
 exports.getUser = asyncHandler(async (req, res, next) => {
     // Get the user of the supplied access token
     const user = await User.findOne(
-        { _id: req.user.userId },
+        { _id: req.user._id },
         "name username memberStatus adminStatus posts timeStamp"
     )
         .populate("posts")
@@ -99,33 +101,74 @@ exports.getUser = asyncHandler(async (req, res, next) => {
     }
 });
 
-exports.updateUser = asyncHandler(async (req, res, next) => {
-    const user = await User.findByIdAndUpdate(req.params.userId, {
-        name: req.body.name,
-        username: req.body.username,
-    });
+exports.updateUser = [
+    body("name", "Name must not be between 1 and 20 characters")
+        .trim()
+        .isLength({ min: 1, max: 20 })
+        .custom(async (value) => {
+            const user = await User.find({ name: value }).exec();
+            if (user.length > 0) {
+                throw new Error(
+                    "Name is already in use, please use a different one"
+                );
+            }
+        })
+        .escape(),
+    body("username", "Username must not be empty")
+        .trim()
+        .isLength({ min: 1 })
+        .isEmail()
+        .withMessage("Username is not proper email format")
+        .custom(async (value) => {
+            const user = await User.find({ username: value }).exec();
+            if (user.length > 0) {
+                throw new Error(
+                    "Username is already in use, please use a different one"
+                );
+            }
+        })
+        .escape(),
+    asyncHandler(async (req, res, next) => {
+        const errors = validationResult(req);
 
-    if (!user) {
-        return res
-            .status(404)
-            .json({ error: `No user with id ${req.params.userId} exists` });
-    } else {
-        res.json({ message: "User updated successfully", user: req.body.name });
-    }
-});
+        if (!errors.isEmpty()) {
+            res.status(400).json({
+                user: { name: req.body.name, username: req.body.username },
+                errors: errors.array(),
+            });
+        } else {
+            const user = await User.findByIdAndUpdate(req.user._id, {
+                name: req.body.name,
+                username: req.body.username,
+            });
+
+            if (!user) {
+                return res
+                    .status(404)
+                    .json({ error: `No user with id ${req.user._id} exists` });
+            } else {
+                res.json({
+                    message: "User updated successfully",
+                    user: req.body.name,
+                });
+            }
+        }
+    }),
+];
 
 exports.deleteUser = asyncHandler(async (req, res, next) => {
-    const user = await User.findByIdAndDelete(req.params.userId);
+    const user = await User.findByIdAndDelete(req.user._id);
 
     if (!user) {
         return res
             .status(404)
-            .json({ error: `No user with id ${req.params.userId} exists` });
+            .json({ error: `No user with id ${req.user._id} exists` });
     } else {
-        const posts = await Post.deleteMany({ user: req.params.userId });
-        const comments = await Comment.deleteMany({ user: req.params.userId });
+        const posts = await Post.deleteMany({ user: req.user._id });
+        const comments = await Comment.deleteMany({ user: req.user._id });
         res.json({
             message: "User deleted successfully",
+            user: user.name,
             posts: posts,
             comments: comments,
         });
