@@ -39,13 +39,12 @@ exports.verifyToken = (req, res, next) => {
 
     req.token = token;
 
-    // Could also verify for the individual routes and provide info as required
-    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
         if (err) {
             return res.status(403).json({ message: "Invalid Token" });
         }
 
-        req.user = user;
+        req.user = decoded.user;
         next();
     });
 };
