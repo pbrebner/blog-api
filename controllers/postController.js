@@ -66,20 +66,44 @@ exports.getPost = asyncHandler(async (req, res, next) => {
     }
 });
 
-exports.updatePost = asyncHandler(async (req, res, next) => {
-    const post = await Post.findByIdAndUpdate(req.params.postId, {
-        title: req.body.title,
-        content: req.body.content,
-    });
+exports.updatePost = [
+    body("title", "Posts must include a title")
+        .trim()
+        .isLength({ min: 1 })
+        .escape(),
+    body("content", "Post must contain some content")
+        .trim()
+        .isLength({ min: 1 })
+        .escape(),
 
-    if (!post) {
-        return res
-            .status(404)
-            .json({ error: `No post with id ${req.params.postId} exists` });
-    } else {
-        res.json({ message: "Post updated successfully", post: post });
-    }
-});
+    asyncHandler(async (req, res, next) => {
+        const errors = validationResult(req);
+
+        if (!errors.isEmpty()) {
+            // Inform client post had errors
+            res.status(400).json({
+                post: { title: req.body.title, content: req.body.content },
+                errors: errors.array(),
+            });
+            return;
+        } else {
+            const post = await Post.findByIdAndUpdate(req.params.postId, {
+                title: req.body.title,
+                content: req.body.content,
+            });
+
+            if (!post) {
+                return res
+                    .status(404)
+                    .json({
+                        error: `No post with id ${req.params.postId} exists`,
+                    });
+            } else {
+                res.json({ message: "Post updated successfully", post: post });
+            }
+        }
+    }),
+];
 
 exports.deletePost = asyncHandler(async (req, res, next) => {
     const post = await Post.findByIdAndDelete(req.params.postId);
