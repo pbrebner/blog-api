@@ -83,8 +83,9 @@ exports.createUser = [
 ];
 
 exports.getUser = asyncHandler(async (req, res, next) => {
+    // Get the user of the supplied access token
     const user = await User.findOne(
-        { _id: req.params.userId },
+        { _id: req.user.userId },
         "name username memberStatus adminStatus posts timeStamp"
     )
         .populate("posts")
