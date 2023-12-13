@@ -84,7 +84,7 @@ exports.login = [
 
         // Create Token
         const token = jwt.sign({ user: user }, process.env.ACCESS_TOKEN_SECRET);
-        res.json({ token: token });
+        res.json({ body: user, token: token });
     }),
 ];
 
