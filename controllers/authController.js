@@ -64,23 +64,6 @@ exports.login = [
             "name username memberStatus adminStatus"
         ).exec();
 
-        /*
-        // Create Token
-        jwt.sign(
-            { user: user },
-            process.env.ACCESS_TOKEN_SECRET,
-            (err, token) => {
-                if (Object.keys(err).length > 0) {
-                    return res
-                        .status(401)
-                        .json({ message: "Error creating token", error: err });
-                }
-
-                res.json({ token: token });
-            }
-        );
-        */
-
         // Create Token
         const token = jwt.sign({ user: user }, process.env.ACCESS_TOKEN_SECRET);
         res.json({ body: user, token: token });
