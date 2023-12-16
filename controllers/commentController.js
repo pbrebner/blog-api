@@ -53,13 +53,25 @@ exports.createPostComment = [
 
 // TODO: Verify that the the comments user matches the id supplied by the token
 exports.deleteComment = asyncHandler(async (req, res, next) => {
-    const comment = await Comment.findByIdAndDelete(req.params.commentId);
+    const comment = await Comment.findOne({ _id: req.params.commentId }, "user")
+        .populate("user", { name: 1 })
+        .exec();
 
     if (!comment) {
         return res.status(404).json({
             error: `No comment with id ${req.params.commentId} exists`,
         });
-    } else {
-        res.json({ message: "Comment deleted successfully", comment: comment });
+    }
+
+    if (comment.user._id === req.user._id) {
+        const comment = await Comment.findByIdAndDelete(req.params.commentId);
+        await Post.findByIdAndUpdate(req.params.postId, {
+            $pull: { comments: comment },
+        });
+
+        res.json({
+            message: "Comment deleted successfully",
+            comment: comment,
+        });
     }
 });
