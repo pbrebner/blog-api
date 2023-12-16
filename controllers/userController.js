@@ -85,25 +85,40 @@ exports.createUser = [
     }),
 ];
 
-// TODO: Set this up to return different information depending if the data is the users
 exports.getUser = asyncHandler(async (req, res, next) => {
-    // Get the user of the supplied access token
-    const user = await User.findOne(
-        { _id: req.user._id },
-        "name username memberStatus adminStatus posts timeStamp"
-    )
-        .populate("posts")
-        .exec();
+    if (req.user._id === req.params.userId) {
+        // Get the user of the supplied access token
+        const user = await User.findOne(
+            { _id: req.user._id },
+            "name username memberStatus adminStatus posts timeStamp timeStampFormatted"
+        )
+            .populate("posts")
+            .exec();
 
-    if (!user) {
-        // Inform client that not user was found
-        res.status(404).json({ error: "User not found" });
+        if (!user) {
+            // Inform client that not user was found
+            res.status(404).json({ error: "User not found" });
+        } else {
+            res.json({ user: user, usersProfile: true });
+        }
     } else {
-        res.json(user);
+        // Get the other user profile from the parameters
+        const user = await User.findOne(
+            { _id: req.params.userId },
+            "name memberStatus posts timeStamp timeStampFormatted"
+        )
+            .populate("posts")
+            .exec();
+
+        if (!user) {
+            // Inform client that not user was found
+            res.status(404).json({ error: "User not found" });
+        } else {
+            res.json({ user: user, usersProfile: false });
+        }
     }
 });
 
-// TODO: Check that the param user matches the id supplied by the token
 exports.updateUser = [
     body("name", "Name must not be between 1 and 20 characters")
         .trim()
@@ -132,48 +147,58 @@ exports.updateUser = [
         })
         .escape(),
     asyncHandler(async (req, res, next) => {
-        const errors = validationResult(req);
+        //Confirm user is updating their own account
+        if (req.user._id === req.params.userId) {
+            const errors = validationResult(req);
 
-        if (!errors.isEmpty()) {
-            res.status(400).json({
-                user: { name: req.body.name, username: req.body.username },
-                errors: errors.array(),
-            });
-        } else {
-            const user = await User.findByIdAndUpdate(req.user._id, {
-                name: req.body.name,
-                username: req.body.username,
-            });
-
-            if (!user) {
-                return res
-                    .status(404)
-                    .json({ error: `No user with id ${req.user._id} exists` });
-            } else {
-                res.json({
-                    message: "User updated successfully",
-                    user: req.body.name,
+            if (!errors.isEmpty()) {
+                res.status(400).json({
+                    user: { name: req.body.name, username: req.body.username },
+                    errors: errors.array(),
                 });
+            } else {
+                const user = await User.findByIdAndUpdate(req.user._id, {
+                    name: req.body.name,
+                    username: req.body.username,
+                });
+
+                if (!user) {
+                    return res.status(404).json({
+                        error: `No user with id ${req.user._id} exists`,
+                    });
+                } else {
+                    res.json({
+                        message: "User updated successfully",
+                        user: req.body.name,
+                    });
+                }
             }
+        } else {
+            res.status(401).json({ error: "Not authorized for this action" });
         }
     }),
 ];
 
 exports.deleteUser = asyncHandler(async (req, res, next) => {
-    const user = await User.findByIdAndDelete(req.user._id);
+    //Confirm user is deleting their own account
+    if (req.user._id === req.params.userId) {
+        const user = await User.findByIdAndDelete(req.user._id);
 
-    if (!user) {
-        return res
-            .status(404)
-            .json({ error: `No user with id ${req.user._id} exists` });
+        if (!user) {
+            return res
+                .status(404)
+                .json({ error: `No user with id ${req.user._id} exists` });
+        } else {
+            const posts = await Post.deleteMany({ user: req.user._id });
+            const comments = await Comment.deleteMany({ user: req.user._id });
+            res.json({
+                message: "User deleted successfully",
+                user: user.name,
+                posts: posts,
+                comments: comments,
+            });
+        }
     } else {
-        const posts = await Post.deleteMany({ user: req.user._id });
-        const comments = await Comment.deleteMany({ user: req.user._id });
-        res.json({
-            message: "User deleted successfully",
-            user: user.name,
-            posts: posts,
-            comments: comments,
-        });
+        res.status(401).json({ error: "Not authorized for this action" });
     }
 });
