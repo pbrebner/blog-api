@@ -1,12 +1,16 @@
 const Post = require("../models/post");
+const User = require("../models/user");
 const Comment = require("../models/comment");
 
 const asyncHandler = require("express-async-handler");
 const { body, validationResult } = require("express-validator");
 
 exports.getAllPosts = asyncHandler(async (req, res, next) => {
-    const posts = await Post.find()
-        .populate("user")
+    const posts = await Post.find(
+        {},
+        "title content user timeStamp timeStampFormatted"
+    )
+        .populate("user", { name: 1 })
         .sort({ timeStamp: 1 })
         .limit(10) // Limit to 10 for now
         .exec();
@@ -47,6 +51,10 @@ exports.createPost = [
             return;
         } else {
             await post.save();
+            //Add post to user
+            await User.findByIdAndUpdate(req.user._id, {
+                $push: { posts: post },
+            });
             // Inform client post was saved
             res.json({ message: "Post successfully saved" });
         }
@@ -66,6 +74,7 @@ exports.getPost = asyncHandler(async (req, res, next) => {
     }
 });
 
+// TODO: Verify that the the posts user matches the id supplied by the token (On both update and delete)
 exports.updatePost = [
     body("title", "Posts must include a title")
         .trim()
@@ -93,11 +102,9 @@ exports.updatePost = [
             });
 
             if (!post) {
-                return res
-                    .status(404)
-                    .json({
-                        error: `No post with id ${req.params.postId} exists`,
-                    });
+                return res.status(404).json({
+                    error: `No post with id ${req.params.postId} exists`,
+                });
             } else {
                 res.json({ message: "Post updated successfully", post: post });
             }

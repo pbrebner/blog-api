@@ -5,8 +5,12 @@ const asyncHandler = require("express-async-handler");
 const { body, validationResult } = require("express-validator");
 
 exports.getAllPostComments = asyncHandler(async (req, res, next) => {
-    const comments = await Comment.find({ postId: req.params.postId })
+    const comments = await Comment.find(
+        { postId: req.params.postId },
+        "content user timeStamp timeStampFormatted"
+    )
         .populate("user", { name: 1 })
+        .sort({ timeStamp: 1 })
         .exec();
 
     if (!comments) {
@@ -38,6 +42,7 @@ exports.createPostComment = [
             return;
         } else {
             await comment.save();
+            //Add comment to post
             await Post.findByIdAndUpdate(req.params.postId, {
                 $push: { comments: comment },
             });
@@ -46,6 +51,7 @@ exports.createPostComment = [
     }),
 ];
 
+// TODO: Verify that the the comments user matches the id supplied by the token
 exports.deleteComment = asyncHandler(async (req, res, next) => {
     const comment = await Comment.findByIdAndDelete(req.params.commentId);
 
