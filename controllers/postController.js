@@ -63,7 +63,7 @@ exports.createPost = [
 
 exports.getPost = asyncHandler(async (req, res, next) => {
     const post = await Post.findOne({ _id: req.params.postId })
-        .populate("comments")
+        .populate("user", { name: 1, timeStamp: 1 })
         .exec();
 
     if (!post) {
