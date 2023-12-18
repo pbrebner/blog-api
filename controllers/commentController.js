@@ -7,7 +7,7 @@ const { body, validationResult } = require("express-validator");
 exports.getAllPostComments = asyncHandler(async (req, res, next) => {
     const comments = await Comment.find(
         { postId: req.params.postId },
-        "content user timeStamp timeStampFormatted"
+        "content user timeStamp"
     )
         .populate("user", { name: 1 })
         .sort({ timeStamp: 1 })

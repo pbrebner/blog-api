@@ -7,10 +7,7 @@ const { body, validationResult } = require("express-validator");
 const bcrypt = require("bcryptjs");
 
 exports.getAllUsers = asyncHandler(async (req, res, next) => {
-    const users = await User.find(
-        {},
-        "name memberStatus timeStamp timeStampFormatted"
-    ).exec();
+    const users = await User.find({}, "name memberStatus timeStamp").exec();
 
     if (!users) {
         res.status(404).json({ error: "No entries found in database" });
@@ -90,7 +87,7 @@ exports.getUser = asyncHandler(async (req, res, next) => {
         // Get the user of the supplied access token
         const user = await User.findOne(
             { _id: req.user._id },
-            "name username memberStatus adminStatus posts timeStamp timeStampFormatted"
+            "name username memberStatus adminStatus posts timeStamp"
         )
             .populate("posts")
             .exec();
@@ -105,7 +102,7 @@ exports.getUser = asyncHandler(async (req, res, next) => {
         // Get the other user profile from the parameters
         const user = await User.findOne(
             { _id: req.params.userId },
-            "name memberStatus posts timeStamp timeStampFormatted"
+            "name memberStatus posts timeStamp"
         )
             .populate("posts")
             .exec();
