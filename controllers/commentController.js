@@ -63,7 +63,7 @@ exports.deleteComment = asyncHandler(async (req, res, next) => {
         });
     }
 
-    if (comment.user._id === req.user._id) {
+    if (comment.user._id == req.user._id) {
         const comment = await Comment.findByIdAndDelete(req.params.commentId);
         await Post.findByIdAndUpdate(req.params.postId, {
             $pull: { comments: comment },

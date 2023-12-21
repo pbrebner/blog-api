@@ -94,7 +94,7 @@ exports.updatePost = [
             });
         }
 
-        if (post.user._id === req.user._id) {
+        if (post.user._id == req.user._id) {
             if (!errors.isEmpty()) {
                 // Inform client post had errors
                 res.status(400).json({
@@ -130,7 +130,7 @@ exports.deletePost = asyncHandler(async (req, res, next) => {
             .json({ error: `No post with id ${req.params.postId} exists` });
     }
 
-    if (post.user._id === req.user._id) {
+    if (post.user._id == req.user._id) {
         const post = await Post.findByIdAndDelete(req.params.postId);
         await Comment.deleteMany({
             postId: req.params.postId,
@@ -140,6 +140,8 @@ exports.deletePost = asyncHandler(async (req, res, next) => {
         });
         res.json({ message: "Post deleted successfully", post: post });
     } else {
-        res.status(401).json({ error: "Not authorized for this action" });
+        res.status(401).json({
+            error: "Not authorized for this action",
+        });
     }
 });
