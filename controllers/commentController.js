@@ -73,5 +73,7 @@ exports.deleteComment = asyncHandler(async (req, res, next) => {
             message: "Comment deleted successfully",
             comment: comment,
         });
+    } else {
+        res.status(401).json({ error: "Not authorized for this action" });
     }
 });

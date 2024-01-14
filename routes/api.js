@@ -80,7 +80,7 @@ router.post(
 );
 
 router.delete(
-    "/posts/:postId/comments/commentId",
+    "/posts/:postId/comments/:commentId",
     authController.verifyToken,
     commentController.deleteComment
 );
