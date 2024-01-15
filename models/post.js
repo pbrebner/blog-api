@@ -5,12 +5,12 @@ const { DateTime } = require("luxon");
 const postSchema = new Schema({
     title: { type: String, required: true },
     content: { type: String, required: true },
-    user: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    likes: { type: Number, default: 0 },
     published: { type: Boolean, default: false },
+    user: { type: Schema.Types.ObjectId, ref: "User", required: true },
     comments: [{ type: Schema.Types.ObjectId, ref: "Comment" }],
     timeStamp: { type: Date, default: Date.now, required: true },
 });
-// Might add likes at a later time
 
 postSchema.virtual("url").get(function () {
     return `/api/posts/${this._id}`;

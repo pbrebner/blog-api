@@ -73,13 +73,16 @@ exports.getPost = asyncHandler(async (req, res, next) => {
 
 exports.updatePost = [
     body("title", "Posts must include a title")
+        .optional()
         .trim()
         .isLength({ min: 1 })
         .escape(),
     body("content", "Post must contain some content")
+        .optional()
         .trim()
         .isLength({ min: 1 })
         .escape(),
+    body("likes").optional().escape(),
 
     asyncHandler(async (req, res, next) => {
         const errors = validationResult(req);
@@ -94,27 +97,47 @@ exports.updatePost = [
             });
         }
 
-        if (post.user._id == req.user._id) {
-            if (!errors.isEmpty()) {
-                // Inform client post had errors
-                res.status(400).json({
-                    post: { title: req.body.title, content: req.body.content },
-                    errors: errors.array(),
-                });
-                return;
-            } else {
-                const post = await Post.findByIdAndUpdate(req.params.postId, {
-                    title: req.body.title,
-                    content: req.body.content,
-                });
+        if (req.body.title && req.body.content) {
+            if (post.user._id == req.user._id) {
+                if (!errors.isEmpty()) {
+                    // Inform client post had errors
+                    res.status(400).json({
+                        post: {
+                            title: req.body.title,
+                            content: req.body.content,
+                        },
+                        errors: errors.array(),
+                    });
+                    return;
+                } else {
+                    const post = await Post.findByIdAndUpdate(
+                        req.params.postId,
+                        {
+                            title: req.body.title,
+                            content: req.body.content,
+                        }
+                    );
 
-                res.json({
-                    message: "Post updated successfully",
-                    post: post,
+                    res.json({
+                        message: "Post updated successfully",
+                        post: post,
+                    });
+                }
+            } else {
+                res.status(401).json({
+                    error: "Not authorized for this action",
                 });
             }
-        } else {
-            res.status(401).json({ error: "Not authorized for this action" });
+        }
+
+        if (req.body.likes) {
+            const post = await Post.findByIdAndUpdate(req.params.postId, {
+                likes: req.body.likes,
+            });
+
+            res.json({
+                message: "Post likes updated successfully",
+            });
         }
     }),
 ];
