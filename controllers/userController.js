@@ -120,12 +120,15 @@ exports.updateUser = [
     body("name", "Name must not be between 1 and 20 characters")
         .trim()
         .isLength({ min: 1, max: 20 })
-        .custom(async (value) => {
+        .custom(async (value, { req }) => {
             const user = await User.find({ name: value }).exec();
             if (user.length > 0) {
-                throw new Error(
-                    "Name is already in use, please use a different one"
-                );
+                // Check if name is my own
+                if (req.user.name != req.body.name) {
+                    throw new Error(
+                        "Name is already in use, please use a different one"
+                    );
+                }
             }
         })
         .escape(),
@@ -134,16 +137,22 @@ exports.updateUser = [
         .isLength({ min: 1 })
         .isEmail()
         .withMessage("Username is not proper email format")
-        .custom(async (value) => {
+        .custom(async (value, { req }) => {
             const user = await User.find({ username: value }).exec();
             if (user.length > 0) {
-                throw new Error(
-                    "Username is already in use, please use a different one"
-                );
+                // Check if username is my own
+                if (req.user.username != req.body.username) {
+                    throw new Error(
+                        "Username is already in use, please use a different one"
+                    );
+                }
             }
         })
         .escape(),
-    body("userDescription").trim().escape(),
+    body("userDescription", "User Description must be less than 300 characters")
+        .trim()
+        .isLength({ max: 300 })
+        .escape(),
     asyncHandler(async (req, res, next) => {
         //Confirm user is updating their own account
         if (req.user._id === req.params.userId) {
@@ -151,13 +160,18 @@ exports.updateUser = [
 
             if (!errors.isEmpty()) {
                 res.status(400).json({
-                    user: { name: req.body.name, username: req.body.username },
+                    user: {
+                        name: req.body.name,
+                        username: req.body.username,
+                        userDescription: req.body.userDescription,
+                    },
                     errors: errors.array(),
                 });
             } else {
                 const user = await User.findByIdAndUpdate(req.user._id, {
                     name: req.body.name,
                     username: req.body.username,
+                    userDescription: req.body.userDescription,
                 });
 
                 if (!user) {
@@ -172,7 +186,9 @@ exports.updateUser = [
                 }
             }
         } else {
-            res.status(401).json({ error: "Not authorized for this action" });
+            res.status(401).json({
+                error: "Not authorized for this action",
+            });
         }
     }),
 ];
