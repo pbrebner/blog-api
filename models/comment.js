@@ -5,6 +5,7 @@ const { DateTime } = require("luxon");
 const commentSchema = new Schema({
     content: { type: String, required: true },
     user: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    likes: { type: Number, default: 0 },
     postId: { type: Schema.Types.ObjectId, ref: "Post", required: true },
     timeStamp: { type: Date, default: Date.now, required: true },
 });

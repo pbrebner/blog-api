@@ -79,6 +79,12 @@ router.post(
     commentController.createPostComment
 );
 
+router.put(
+    "/posts/:postId/comments/:commentId",
+    authController.verifyToken,
+    commentController.updateComment
+);
+
 router.delete(
     "/posts/:postId/comments/:commentId",
     authController.verifyToken,
