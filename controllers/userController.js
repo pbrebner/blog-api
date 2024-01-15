@@ -87,7 +87,7 @@ exports.getUser = asyncHandler(async (req, res, next) => {
         // Get the user of the supplied access token
         const user = await User.findOne(
             { _id: req.user._id },
-            "name username memberStatus adminStatus posts timeStamp"
+            "name username userDescription memberStatus adminStatus posts timeStamp"
         )
             .populate("posts")
             .exec();
@@ -102,7 +102,7 @@ exports.getUser = asyncHandler(async (req, res, next) => {
         // Get the other user profile from the parameters
         const user = await User.findOne(
             { _id: req.params.userId },
-            "name memberStatus posts timeStamp"
+            "name userDescription memberStatus posts timeStamp"
         )
             .populate("posts")
             .exec();
@@ -143,6 +143,7 @@ exports.updateUser = [
             }
         })
         .escape(),
+    body("userDescription").trim().escape(),
     asyncHandler(async (req, res, next) => {
         //Confirm user is updating their own account
         if (req.user._id === req.params.userId) {

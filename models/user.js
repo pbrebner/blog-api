@@ -6,6 +6,7 @@ const userSchema = new Schema({
     name: { type: String, required: true },
     username: { type: String, required: true },
     password: { type: String, required: true },
+    userDescription: { type: String },
     memberStatus: { type: Boolean, default: false },
     adminStatus: { type: Boolean, default: false },
     posts: [{ type: Schema.Types.ObjectId, ref: "Post" }],
