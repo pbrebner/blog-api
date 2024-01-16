@@ -6,7 +6,10 @@ const asyncHandler = require("express-async-handler");
 const { body, validationResult } = require("express-validator");
 
 exports.getAllPosts = asyncHandler(async (req, res, next) => {
-    const posts = await Post.find({}, "title content user timeStamp")
+    const posts = await Post.find(
+        { published: true },
+        "title content user timeStamp"
+    )
         .populate("user", { name: 1 })
         .sort({ timeStamp: 1 })
         .limit(10) // Limit to 10 for now
@@ -19,7 +22,6 @@ exports.getAllPosts = asyncHandler(async (req, res, next) => {
     }
 });
 
-// TODO: Add way to save and/or publish the article
 exports.createPost = [
     body("title", "Posts must include a title")
         .trim()
@@ -29,6 +31,7 @@ exports.createPost = [
         .trim()
         .isLength({ min: 1 })
         .escape(),
+    body("published").escape(),
     asyncHandler(async (req, res, next) => {
         const errors = validationResult(req);
 
@@ -36,7 +39,7 @@ exports.createPost = [
             title: req.body.title,
             content: req.body.content,
             user: req.user._id,
-            published: true,
+            published: req.body.published,
         });
 
         if (!errors.isEmpty()) {
@@ -83,6 +86,7 @@ exports.updatePost = [
         .isLength({ min: 1 })
         .escape(),
     body("likes").optional().escape(),
+    body("published").optional().escape(),
 
     asyncHandler(async (req, res, next) => {
         const errors = validationResult(req);
@@ -97,7 +101,7 @@ exports.updatePost = [
             });
         }
 
-        if (req.body.title && req.body.content) {
+        if (req.body.title && req.body.content && req.body.published) {
             if (post.user._id == req.user._id) {
                 if (!errors.isEmpty()) {
                     // Inform client post had errors
@@ -115,6 +119,7 @@ exports.updatePost = [
                         {
                             title: req.body.title,
                             content: req.body.content,
+                            published: req.body.published,
                         }
                     );
 
