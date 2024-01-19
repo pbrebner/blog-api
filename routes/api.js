@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const authController = require("../controllers/authController");
+const s3Controller = require("../controllers/s3Controller");
 const userController = require("../controllers/userController");
 const postController = require("../controllers/postController");
 const commentController = require("../controllers/commentController");
@@ -16,6 +17,10 @@ router.get("/", function (req, res, next) {
 router.post("/login", authController.login);
 
 router.post("/logout", authController.logout);
+
+// S3 ROUTES
+
+router.get("/s3Url", authController.verifyToken, s3Controller.getUrl);
 
 // USER ROUTES
 
