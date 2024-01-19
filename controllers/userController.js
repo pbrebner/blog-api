@@ -87,7 +87,7 @@ exports.getUser = asyncHandler(async (req, res, next) => {
         // Get the user of the supplied access token
         const user = await User.findOne(
             { _id: req.user._id },
-            "name username userDescription memberStatus adminStatus posts timeStamp"
+            "name username userDescription avatar memberStatus adminStatus posts timeStamp"
         )
             .populate("posts")
             .exec();
@@ -102,7 +102,7 @@ exports.getUser = asyncHandler(async (req, res, next) => {
         // Get the other user profile from the parameters
         const user = await User.findOne(
             { _id: req.params.userId },
-            "name userDescription memberStatus posts timeStamp"
+            "name userDescription avatar memberStatus posts timeStamp"
         )
             .populate("posts")
             .exec();
@@ -117,6 +117,7 @@ exports.getUser = asyncHandler(async (req, res, next) => {
 });
 
 exports.updateUser = [
+    body("avatar").optional().trim().escape(),
     body("name", "Name must not be between 1 and 20 characters")
         .trim()
         .isLength({ min: 1, max: 20 })
@@ -169,6 +170,7 @@ exports.updateUser = [
                 });
             } else {
                 const user = await User.findByIdAndUpdate(req.user._id, {
+                    avatar: req.body.avatar || req.user.avatar,
                     name: req.body.name,
                     username: req.body.username,
                     userDescription: req.body.userDescription,

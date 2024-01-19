@@ -7,6 +7,11 @@ const userSchema = new Schema({
     username: { type: String, required: true },
     password: { type: String, required: true },
     userDescription: { type: String, default: "" },
+    avatar: {
+        type: String,
+        default:
+            "https://blog-bucket-banana.s3.us-west-2.amazonaws.com/blogProfileDefault.png",
+    },
     memberStatus: { type: Boolean, default: false },
     adminStatus: { type: Boolean, default: false },
     posts: [{ type: Schema.Types.ObjectId, ref: "Post" }],
