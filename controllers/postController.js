@@ -8,7 +8,7 @@ const { body, validationResult } = require("express-validator");
 exports.getAllPosts = asyncHandler(async (req, res, next) => {
     const posts = await Post.find(
         { published: true },
-        "title content user timeStamp"
+        "title content image user timeStamp"
     )
         .populate("user", { name: 1, avatar: 1 })
         .sort({ timeStamp: 1 })
@@ -31,6 +31,7 @@ exports.createPost = [
         .trim()
         .isLength({ min: 1 })
         .blacklist("<>"),
+    body("image").optional().trim(),
     body("published"),
     asyncHandler(async (req, res, next) => {
         const errors = validationResult(req);
@@ -38,6 +39,7 @@ exports.createPost = [
         const post = new Post({
             title: req.body.title,
             content: req.body.content,
+            image: req.body.image || "",
             user: req.user._id,
             published: req.body.published,
         });
@@ -85,6 +87,7 @@ exports.updatePost = [
         .trim()
         .isLength({ min: 1 })
         .blacklist("<>"),
+    body("image").optional().trim(),
     body("likes").optional(),
     body("published").optional(),
 
@@ -114,19 +117,36 @@ exports.updatePost = [
                     });
                     return;
                 } else {
-                    const post = await Post.findByIdAndUpdate(
-                        req.params.postId,
-                        {
-                            title: req.body.title,
-                            content: req.body.content,
-                            published: req.body.published,
-                        }
-                    );
+                    if (req.body.image) {
+                        const post = await Post.findByIdAndUpdate(
+                            req.params.postId,
+                            {
+                                title: req.body.title,
+                                content: req.body.content,
+                                image: req.body.image,
+                                published: req.body.published,
+                            }
+                        );
 
-                    res.json({
-                        message: "Post updated successfully",
-                        post: post,
-                    });
+                        res.json({
+                            message: "Post updated successfully",
+                            post: post,
+                        });
+                    } else {
+                        const post = await Post.findByIdAndUpdate(
+                            req.params.postId,
+                            {
+                                title: req.body.title,
+                                content: req.body.content,
+                                published: req.body.published,
+                            }
+                        );
+
+                        res.json({
+                            message: "Post updated successfully",
+                            post: post,
+                        });
+                    }
                 }
             } else {
                 res.status(401).json({
