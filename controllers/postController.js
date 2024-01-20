@@ -10,7 +10,7 @@ exports.getAllPosts = asyncHandler(async (req, res, next) => {
         { published: true },
         "title content user timeStamp"
     )
-        .populate("user", { name: 1 })
+        .populate("user", { name: 1, avatar: 1 })
         .sort({ timeStamp: 1 })
         .limit(10) // Limit to 10 for now
         .exec();
@@ -26,12 +26,12 @@ exports.createPost = [
     body("title", "Posts must include a title")
         .trim()
         .isLength({ min: 1 })
-        .escape(),
+        .blacklist("<>"),
     body("content", "Post must contain some content")
         .trim()
         .isLength({ min: 1 })
-        .escape(),
-    body("published").escape(),
+        .blacklist("<>"),
+    body("published"),
     asyncHandler(async (req, res, next) => {
         const errors = validationResult(req);
 
@@ -63,7 +63,7 @@ exports.createPost = [
 
 exports.getPost = asyncHandler(async (req, res, next) => {
     const post = await Post.findOne({ _id: req.params.postId })
-        .populate("user", { name: 1, timeStamp: 1 })
+        .populate("user", { name: 1, avatar: 1, timeStamp: 1 })
         .exec();
 
     if (!post) {
@@ -79,14 +79,14 @@ exports.updatePost = [
         .optional()
         .trim()
         .isLength({ min: 1 })
-        .escape(),
+        .blacklist("<>"),
     body("content", "Post must contain some content")
         .optional()
         .trim()
         .isLength({ min: 1 })
-        .escape(),
-    body("likes").optional().escape(),
-    body("published").optional().escape(),
+        .blacklist("<>"),
+    body("likes").optional(),
+    body("published").optional(),
 
     asyncHandler(async (req, res, next) => {
         const errors = validationResult(req);

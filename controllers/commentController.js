@@ -9,7 +9,7 @@ exports.getAllPostComments = asyncHandler(async (req, res, next) => {
         { postId: req.params.postId },
         "content user likes timeStamp"
     )
-        .populate("user", { name: 1 })
+        .populate("user", { name: 1, avatar: 1 })
         .sort({ timeStamp: 1 })
         .exec();
 
@@ -24,7 +24,7 @@ exports.createPostComment = [
     body("content", "Comment has to be between 1 and 140 characters")
         .trim()
         .isLength({ min: 1, max: 140 })
-        .escape(),
+        .blacklist("<>"),
     asyncHandler(async (req, res, next) => {
         const errors = validationResult(req);
 
@@ -52,7 +52,7 @@ exports.createPostComment = [
 ];
 
 exports.updateComment = [
-    body("likes").optional().escape(),
+    body("likes").optional(),
 
     asyncHandler(async (req, res, next) => {
         const comment = await Comment.findByIdAndUpdate(req.params.commentId, {

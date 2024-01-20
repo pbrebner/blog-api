@@ -7,7 +7,10 @@ const { body, validationResult } = require("express-validator");
 const bcrypt = require("bcryptjs");
 
 exports.getAllUsers = asyncHandler(async (req, res, next) => {
-    const users = await User.find({}, "name memberStatus timeStamp").exec();
+    const users = await User.find(
+        {},
+        "name avatar memberStatus timeStamp"
+    ).exec();
 
     if (!users) {
         res.status(404).json({ error: "No entries found in database" });
@@ -117,7 +120,7 @@ exports.getUser = asyncHandler(async (req, res, next) => {
 });
 
 exports.updateUser = [
-    body("avatar").optional().trim().escape(),
+    body("avatar").optional().trim(),
     body("name", "Name must not be between 1 and 20 characters")
         .trim()
         .isLength({ min: 1, max: 20 })
@@ -153,7 +156,7 @@ exports.updateUser = [
     body("userDescription", "User Description must be less than 300 characters")
         .trim()
         .isLength({ max: 300 })
-        .escape(),
+        .blacklist("<>"),
     asyncHandler(async (req, res, next) => {
         //Confirm user is updating their own account
         if (req.user._id === req.params.userId) {
