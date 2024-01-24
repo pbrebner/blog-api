@@ -11,8 +11,8 @@ exports.getAllPosts = asyncHandler(async (req, res, next) => {
         "title content image user timeStamp"
     )
         .populate("user", { name: 1, avatar: 1 })
-        .sort({ timeStamp: 1 })
-        .limit(10) // Limit to 10 for now
+        .sort({ timeStamp: -1 })
+        .limit(20) // Limit to 20 for now
         .exec();
 
     if (!posts) {
