@@ -23,10 +23,8 @@ REST API backend for a blog website built as part of The ODIN Project curriculum
 -   Mongoose
 -   bcryptjs
 -   Passport
+-   AWS S3
 
 ## TODO
 
--   Modify user model to include profile picture and user description
--   Modify user controller to be able to upload picture and description on user update
--   Modify post model to have published attribute
 -   Create and implement refresh tokens
