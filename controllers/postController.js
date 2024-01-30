@@ -23,11 +23,11 @@ exports.getAllPosts = asyncHandler(async (req, res, next) => {
 });
 
 exports.createPost = [
-    body("title", "Posts must include a title")
+    body("title", "Posts must include a title.")
         .trim()
         .isLength({ min: 1 })
         .blacklist("<>"),
-    body("content", "Post must contain some content")
+    body("content", "Post must contain some content.")
         .trim()
         .isLength({ min: 1 })
         .blacklist("<>"),
@@ -58,7 +58,7 @@ exports.createPost = [
                 $push: { posts: post },
             });
             // Inform client post was saved
-            res.json({ message: "Post successfully saved" });
+            res.json({ message: "Post successfully saved." });
         }
     }),
 ];
@@ -77,12 +77,12 @@ exports.getPost = asyncHandler(async (req, res, next) => {
 });
 
 exports.updatePost = [
-    body("title", "Posts must include a title")
+    body("title", "Posts must include a title.")
         .optional()
         .trim()
         .isLength({ min: 1 })
         .blacklist("<>"),
-    body("content", "Post must contain some content")
+    body("content", "Post must contain some content.")
         .optional()
         .trim()
         .isLength({ min: 1 })
@@ -100,7 +100,7 @@ exports.updatePost = [
 
         if (!post) {
             return res.status(404).json({
-                error: `No post with id ${req.params.postId} exists`,
+                error: `No post with id ${req.params.postId} exists.`,
             });
         }
 
@@ -129,7 +129,7 @@ exports.updatePost = [
                         );
 
                         res.json({
-                            message: "Post updated successfully",
+                            message: "Post updated successfully.",
                             post: post,
                         });
                     } else {
@@ -143,14 +143,14 @@ exports.updatePost = [
                         );
 
                         res.json({
-                            message: "Post updated successfully",
+                            message: "Post updated successfully.",
                             post: post,
                         });
                     }
                 }
             } else {
                 res.status(401).json({
-                    error: "Not authorized for this action",
+                    error: "Not authorized for this action.",
                 });
             }
         }
@@ -161,7 +161,7 @@ exports.updatePost = [
             });
 
             res.json({
-                message: "Post likes updated successfully",
+                message: "Post likes updated successfully.",
             });
         }
     }),
@@ -189,7 +189,7 @@ exports.deletePost = asyncHandler(async (req, res, next) => {
         res.json({ message: "Post deleted successfully", post: post });
     } else {
         res.status(401).json({
-            error: "Not authorized for this action",
+            error: "Not authorized for this action.",
         });
     }
 });

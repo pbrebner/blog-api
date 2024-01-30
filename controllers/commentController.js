@@ -21,7 +21,7 @@ exports.getAllPostComments = asyncHandler(async (req, res, next) => {
 });
 
 exports.createPostComment = [
-    body("content", "Comment has to be between 1 and 140 characters")
+    body("content", "Comment has to be between 1 and 140 characters.")
         .trim()
         .isLength({ min: 1, max: 140 })
         .blacklist("<>"),
@@ -46,7 +46,7 @@ exports.createPostComment = [
             await Post.findByIdAndUpdate(req.params.postId, {
                 $push: { comments: comment },
             });
-            res.json({ message: "Comment saved successfully" });
+            res.json({ message: "Comment saved successfully." });
         }
     }),
 ];
@@ -61,17 +61,16 @@ exports.updateComment = [
 
         if (!comment) {
             return res.status(404).json({
-                error: `No comment with id ${req.params.commentId} exists`,
+                error: `No comment with id ${req.params.commentId} exists.`,
             });
         } else {
             res.json({
-                message: "Comment likes updated successfully",
+                message: "Comment likes updated successfully.",
             });
         }
     }),
 ];
 
-// TODO: Verify that the the comments user matches the id supplied by the token
 exports.deleteComment = asyncHandler(async (req, res, next) => {
     const comment = await Comment.findOne({ _id: req.params.commentId }, "user")
         .populate("user", { name: 1 })
@@ -79,7 +78,7 @@ exports.deleteComment = asyncHandler(async (req, res, next) => {
 
     if (!comment) {
         return res.status(404).json({
-            error: `No comment with id ${req.params.commentId} exists`,
+            error: `No comment with id ${req.params.commentId} exists.`,
         });
     }
 
@@ -90,10 +89,10 @@ exports.deleteComment = asyncHandler(async (req, res, next) => {
         });
 
         res.json({
-            message: "Comment deleted successfully",
+            message: "Comment deleted successfully.",
             comment: comment,
         });
     } else {
-        res.status(401).json({ error: "Not authorized for this action" });
+        res.status(401).json({ error: "Not authorized for this action." });
     }
 });

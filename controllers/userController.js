@@ -13,44 +13,45 @@ exports.getAllUsers = asyncHandler(async (req, res, next) => {
     ).exec();
 
     if (!users) {
-        res.status(404).json({ error: "No entries found in database" });
+        res.status(404).json({ error: "No entries found in database." });
     } else {
         res.json(users);
     }
 });
 
 exports.createUser = [
-    body("name", "Name must not be between 1 and 40 characters")
+    body("name", "Name must not be between 1 and 30 characters.")
         .trim()
-        .isLength({ min: 1, max: 40 })
+        .isLength({ min: 1, max: 30 })
         .custom(async (value) => {
             const user = await User.find({ name: value }).exec();
             if (user.length > 0) {
                 throw new Error(
-                    "Name is already in use, please use a different one"
+                    "Name is already in use, please use a different one."
                 );
             }
         })
         .escape(),
-    body("username", "Username must not be empty")
+    body("username")
         .trim()
         .isLength({ min: 1 })
+        .withMessage("Username must not be empty.")
         .isEmail()
-        .withMessage("Username is not proper email format")
+        .withMessage("Username is not proper email format.")
         .custom(async (value) => {
             const user = await User.find({ username: value }).exec();
             if (user.length > 0) {
                 throw new Error(
-                    "Username is already in use, please use a different one"
+                    "Username is already in use, please use a different one."
                 );
             }
         })
         .escape(),
-    body("password", "Password must not be a minimum of 6 characters")
+    body("password", "Password must be a minimum of 6 characters.")
         .trim()
         .isLength({ min: 6 })
         .escape(),
-    body("passwordConfirm", "Passwords must match")
+    body("passwordConfirm", "Passwords must match.")
         .trim()
         .custom((value, { req }) => {
             return value === req.body.password;
@@ -121,39 +122,42 @@ exports.getUser = asyncHandler(async (req, res, next) => {
 
 exports.updateUser = [
     body("avatar").optional().trim(),
-    body("name", "Name must not be between 1 and 20 characters")
+    body("name", "Name must not be between 1 and 30 characters.")
         .trim()
-        .isLength({ min: 1, max: 20 })
+        .isLength({ min: 1, max: 30 })
         .custom(async (value, { req }) => {
             const user = await User.find({ name: value }).exec();
             if (user.length > 0) {
                 // Check if name is my own
                 if (req.user.name != req.body.name) {
                     throw new Error(
-                        "Name is already in use, please use a different one"
+                        "Name is already in use, please use a different one."
                     );
                 }
             }
         })
         .escape(),
-    body("username", "Username must not be empty")
+    body("username", "Username must not be empty.")
         .trim()
         .isLength({ min: 1 })
         .isEmail()
-        .withMessage("Username is not proper email format")
+        .withMessage("Username is not proper email format.")
         .custom(async (value, { req }) => {
             const user = await User.find({ username: value }).exec();
             if (user.length > 0) {
                 // Check if username is my own
                 if (req.user.username != req.body.username) {
                     throw new Error(
-                        "Username is already in use, please use a different one"
+                        "Username is already in use, please use a different one."
                     );
                 }
             }
         })
         .escape(),
-    body("userDescription", "User Description must be less than 300 characters")
+    body(
+        "userDescription",
+        "User Description must be less than 300 characters."
+    )
         .trim()
         .isLength({ max: 300 })
         .blacklist("<>"),
@@ -185,14 +189,14 @@ exports.updateUser = [
                     });
                 } else {
                     res.json({
-                        message: "User updated successfully",
+                        message: "User updated successfully.",
                         user: req.body.name,
                     });
                 }
             }
         } else {
             res.status(401).json({
-                error: "Not authorized for this action",
+                error: "Not authorized for this action.",
             });
         }
     }),
@@ -211,13 +215,13 @@ exports.deleteUser = asyncHandler(async (req, res, next) => {
             const posts = await Post.deleteMany({ user: req.user._id });
             const comments = await Comment.deleteMany({ user: req.user._id });
             res.json({
-                message: "User deleted successfully",
+                message: "User deleted successfully.",
                 user: user.name,
                 posts: posts,
                 comments: comments,
             });
         }
     } else {
-        res.status(401).json({ error: "Not authorized for this action" });
+        res.status(401).json({ error: "Not authorized for this action." });
     }
 });
