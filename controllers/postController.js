@@ -15,11 +15,7 @@ exports.getAllPosts = asyncHandler(async (req, res, next) => {
         .limit(20) // Limit to 20 for now
         .exec();
 
-    if (!posts) {
-        res.status(404).json({ error: "No entries found in database" });
-    } else {
-        res.json(posts);
-    }
+    res.json(posts);
 });
 
 exports.createPost = [
@@ -56,9 +52,9 @@ exports.createPost = [
             //Add post to user
             await User.findByIdAndUpdate(req.user._id, {
                 $push: { posts: post },
-            });
+            }).exec();
             // Inform client post was saved
-            res.json({ message: "Post successfully saved." });
+            res.json({ postId: post._id, message: "Post successfully saved." });
         }
     }),
 ];
@@ -126,7 +122,7 @@ exports.updatePost = [
                                 image: req.body.image,
                                 published: req.body.published,
                             }
-                        );
+                        ).exec();
 
                         res.json({
                             message: "Post updated successfully.",
@@ -140,7 +136,7 @@ exports.updatePost = [
                                 content: req.body.content,
                                 published: req.body.published,
                             }
-                        );
+                        ).exec();
 
                         res.json({
                             message: "Post updated successfully.",
@@ -149,7 +145,7 @@ exports.updatePost = [
                     }
                 }
             } else {
-                res.status(401).json({
+                res.status(403).json({
                     error: "Not authorized for this action.",
                 });
             }
@@ -158,7 +154,7 @@ exports.updatePost = [
         if (req.body.likes) {
             const post = await Post.findByIdAndUpdate(req.params.postId, {
                 likes: req.body.likes,
-            });
+            }).exec();
 
             res.json({
                 message: "Post likes updated successfully.",
@@ -182,13 +178,13 @@ exports.deletePost = asyncHandler(async (req, res, next) => {
         const post = await Post.findByIdAndDelete(req.params.postId);
         await Comment.deleteMany({
             postId: req.params.postId,
-        });
+        }).exec();
         await User.findByIdAndUpdate(req.user._id, {
             $pull: { posts: req.params.postId },
-        });
+        }).exec();
         res.json({ message: "Post deleted successfully", post: post });
     } else {
-        res.status(401).json({
+        res.status(403).json({
             error: "Not authorized for this action.",
         });
     }

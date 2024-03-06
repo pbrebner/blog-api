@@ -13,11 +13,7 @@ exports.getAllPostComments = asyncHandler(async (req, res, next) => {
         .sort({ timeStamp: 1 })
         .exec();
 
-    if (!comments) {
-        res.status(404).json({ error: "No entries found in database" });
-    } else {
-        res.json(comments);
-    }
+    res.json(comments);
 });
 
 exports.createPostComment = [
@@ -45,8 +41,11 @@ exports.createPostComment = [
             //Add comment to post
             await Post.findByIdAndUpdate(req.params.postId, {
                 $push: { comments: comment },
+            }).exec();
+            res.json({
+                commentId: comment._id,
+                message: "Comment saved successfully.",
             });
-            res.json({ message: "Comment saved successfully." });
         }
     }),
 ];
@@ -57,7 +56,7 @@ exports.updateComment = [
     asyncHandler(async (req, res, next) => {
         const comment = await Comment.findByIdAndUpdate(req.params.commentId, {
             likes: req.body.likes,
-        });
+        }).exec();
 
         if (!comment) {
             return res.status(404).json({
@@ -83,16 +82,18 @@ exports.deleteComment = asyncHandler(async (req, res, next) => {
     }
 
     if (comment.user._id == req.user._id) {
-        const comment = await Comment.findByIdAndDelete(req.params.commentId);
+        const comment = await Comment.findByIdAndDelete(
+            req.params.commentId
+        ).exec();
         await Post.findByIdAndUpdate(req.params.postId, {
             $pull: { comments: comment._id },
-        });
+        }).exec();
 
         res.json({
             message: "Comment deleted successfully.",
             comment: comment,
         });
     } else {
-        res.status(401).json({ error: "Not authorized for this action." });
+        res.status(403).json({ error: "Not authorized for this action." });
     }
 });

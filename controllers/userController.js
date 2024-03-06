@@ -12,11 +12,7 @@ exports.getAllUsers = asyncHandler(async (req, res, next) => {
         "name avatar memberStatus timeStamp"
     ).exec();
 
-    if (!users) {
-        res.status(404).json({ error: "No entries found in database." });
-    } else {
-        res.json(users);
-    }
+    res.json(users);
 });
 
 exports.createUser = [
@@ -126,14 +122,14 @@ exports.updateUser = [
         .trim()
         .isLength({ min: 1, max: 30 })
         .custom(async (value, { req }) => {
+            const currentUser = await User.findById(req.user._id).exec();
             const user = await User.find({ name: value }).exec();
-            if (user.length > 0) {
-                // Check if name is my own
-                if (req.user.name != req.body.name) {
-                    throw new Error(
-                        "Name is already in use, please use a different one."
-                    );
-                }
+
+            // Check if name is taken by another user
+            if (user.length > 0 && currentUser.name != value) {
+                throw new Error(
+                    "Name is already in use, please use a different one."
+                );
             }
         })
         .escape(),
@@ -143,14 +139,14 @@ exports.updateUser = [
         .isEmail()
         .withMessage("Username is not proper email format.")
         .custom(async (value, { req }) => {
+            const currentUser = await User.findById(req.user._id).exec();
             const user = await User.find({ username: value }).exec();
-            if (user.length > 0) {
-                // Check if username is my own
-                if (req.user.username != req.body.username) {
-                    throw new Error(
-                        "Username is already in use, please use a different one."
-                    );
-                }
+
+            // Check if username is taken by another user
+            if (user.length > 0 && currentUser.username != value) {
+                throw new Error(
+                    "Username is already in use, please use a different one."
+                );
             }
         })
         .escape(),
@@ -181,7 +177,7 @@ exports.updateUser = [
                     name: req.body.name,
                     username: req.body.username,
                     userDescription: req.body.userDescription,
-                });
+                }).exec();
 
                 if (!user) {
                     return res.status(404).json({
@@ -195,7 +191,7 @@ exports.updateUser = [
                 }
             }
         } else {
-            res.status(401).json({
+            res.status(403).json({
                 error: "Not authorized for this action.",
             });
         }
@@ -205,15 +201,17 @@ exports.updateUser = [
 exports.deleteUser = asyncHandler(async (req, res, next) => {
     //Confirm user is deleting their own account
     if (req.user._id === req.params.userId) {
-        const user = await User.findByIdAndDelete(req.user._id);
+        const user = await User.findByIdAndDelete(req.user._id).exec();
 
         if (!user) {
             return res
                 .status(404)
                 .json({ error: `No user with id ${req.user._id} exists` });
         } else {
-            const posts = await Post.deleteMany({ user: req.user._id });
-            const comments = await Comment.deleteMany({ user: req.user._id });
+            const posts = await Post.deleteMany({ user: req.user._id }).exec();
+            const comments = await Comment.deleteMany({
+                user: req.user._id,
+            }).exec();
             res.json({
                 message: "User deleted successfully.",
                 user: user.name,
@@ -222,6 +220,6 @@ exports.deleteUser = asyncHandler(async (req, res, next) => {
             });
         }
     } else {
-        res.status(401).json({ error: "Not authorized for this action." });
+        res.status(403).json({ error: "Not authorized for this action." });
     }
 });

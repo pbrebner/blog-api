@@ -45,36 +45,13 @@ exports.verifyToken = (req, res, next) => {
 
     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
         if (err) {
-            return res.status(403).json({ message: "Invalid Token." });
+            return res.status(401).json({ message: "Invalid Token." });
         }
 
         req.user = decoded.user;
         next();
     });
 };
-
-/*
-exports.login = [
-    //TODO: Need to figure out a way to display the error messages during login auth
-
-    //Authenticate login
-    passport.authenticate("local", {
-        session: false,
-    }),
-
-    // Function to create token
-    asyncHandler(async (req, res, next) => {
-        const user = await User.findOne(
-            { username: req.body.username },
-            "name username memberStatus adminStatus"
-        ).exec();
-
-        // Create Token
-        const token = jwt.sign({ user: user }, process.env.ACCESS_TOKEN_SECRET);
-        res.json({ body: user, token: token });
-    }),
-];
-*/
 
 exports.login = (req, res) => {
     passport.authenticate(
