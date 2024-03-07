@@ -8,6 +8,7 @@
         "serverstart": "DEBUG=blog-api:* npm run devstart"
     },
     "dependencies": {
+        "@aws-sdk/client-s3": "^3.525.0",
         "aws-sdk": "^2.1539.0",
         "bcryptjs": "^2.4.3",
         "compression": "^1.7.4",
@@ -15,7 +16,7 @@
         "cors": "^2.8.5",
         "debug": "~2.6.9",
         "dotenv": "^16.3.1",
-        "express": "~4.16.1",
+        "express": "^4.18.3",
         "express-async-handler": "^1.2.0",
         "express-rate-limit": "^7.1.5",
         "express-session": "^1.17.3",
@@ -28,7 +29,7 @@
         "morgan": "~1.9.1",
         "passport": "^0.7.0",
         "passport-local": "^1.0.0",
-        "pug": "2.0.0-beta11"
+        "pug": "^3.0.2"
     },
     "devDependencies": {
         "@flydotio/dockerfile": "^0.4.11",
