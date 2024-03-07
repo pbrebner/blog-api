@@ -1,5 +1,4 @@
-const { S3Client } = require("@aws-sdk/client-s3");
-
+const aws = require("aws-sdk");
 const crypto = require("crypto");
 const util = require("util");
 const randomBytes = util.promisify(crypto.randomBytes);
@@ -11,7 +10,7 @@ const bucketName = "blog-bucket-banana";
 const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
 const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
 
-const s3 = new S3Client({
+const s3 = new aws.S3({
     region,
     accessKeyId,
     secretAccessKey,
