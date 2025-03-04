@@ -32,25 +32,42 @@ passport.use(
     })
 );
 
-// Function to verify token
-exports.verifyToken = (req, res, next) => {
-    const authHeader = req.headers["authorization"];
-    const token = authHeader && authHeader.split(" ")[1];
+exports.refresh = (req, res, next) => {
+    if (req.cookies?.jwt) {
+        // Destructuring refreshToken from cookie
+        const refreshToken = req.cookies.jwt;
 
-    if (token == null) {
-        return res.status(401).json({ message: "No token." });
+        // Verifying refresh token
+        jwt.verify(
+            refreshToken,
+            process.env.REFRESH_TOKEN_SECRET,
+            asyncHandler(async (err, decoded) => {
+                if (err) {
+                    // Wrong Refesh Token
+                    return res.status(403).json({ message: "Invalid Token." });
+                }
+
+                const user = await User.findById(
+                    decoded.user._id,
+                    "name email memberStatus adminStatus"
+                ).exec();
+                if (!user) {
+                    return res.status(401).json({ message: "Unauthorized." });
+                }
+
+                // Correct token we send a new access token
+                const token = jwt.sign(
+                    { user: user },
+                    process.env.ACCESS_TOKEN_SECRET,
+                    { expiresIn: "20m" }
+                );
+
+                return res.json({ token: token });
+            })
+        );
+    } else {
+        return res.status(401).json({ message: "Unauthorized." });
     }
-
-    req.token = token;
-
-    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
-        if (err) {
-            return res.status(401).json({ message: "Invalid Token." });
-        }
-
-        req.user = decoded.user;
-        next();
-    });
 };
 
 exports.login = (req, res) => {
@@ -74,8 +91,25 @@ exports.login = (req, res) => {
                 // Create Token
                 const token = jwt.sign(
                     { user: user },
-                    process.env.ACCESS_TOKEN_SECRET
+                    process.env.ACCESS_TOKEN_SECRET,
+                    { expiresIn: "20m" }
                 );
+
+                // Create Refresh Token
+                const refreshToken = jwt.sign(
+                    { user: user },
+                    process.env.REFRESH_TOKEN_SECRET,
+                    { expiresIn: "7d" }
+                );
+
+                // Assigning refresh token in http-only cookie
+                res.cookie("jwt", refreshToken, {
+                    httpOnly: true, // accessible only from web server
+                    sameSite: "None",
+                    secure: true, // https
+                    maxAge: 7 * 24 * 60 * 60 * 1000, // Needs to match refresh expire
+                });
+
                 res.json({ body: user, token: token });
             }
         }
@@ -83,6 +117,14 @@ exports.login = (req, res) => {
 };
 
 exports.logout = asyncHandler(async (req, res, next) => {
-    // Might not need
-    res.json({ message: "Not Implemented yet." });
+    if (req.cookies?.jwt) {
+        res.clearCookie("jwt", {
+            httpOnly: true,
+            sameSite: "None",
+            secure: true,
+        });
+        return res.json({ message: "Logout Successful" });
+    } else {
+        return res.sendStatus(204);
+    }
 });
