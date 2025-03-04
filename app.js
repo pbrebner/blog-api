@@ -11,20 +11,13 @@ const cors = require("cors");
 const indexRouter = require("./routes/index");
 const apiRouter = require("./routes/api");
 
-//const compression = require("compression");
-
 const app = express();
 
-app.use(cors());
-
-// Set up rate limiter: maximum of twenty requests per minute
-//const RateLimit = require("express-rate-limit");
-//const limiter = RateLimit({
-//    windowMs: 1 * 60 * 1000, // 1 minute
-//    max: 30,
-//});
-// Apply rate limiter to all requests
-//app.use(limiter);
+app.use(
+    cors({
+        origin: ["http://localhost:5173", "https://pbrebner.github.io"],
+    })
+);
 
 // Set up mongoose connection
 const mongoose = require("mongoose");
@@ -45,7 +38,6 @@ app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-//app.use(compression()); // Compress all routes
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/", indexRouter);
@@ -65,7 +57,6 @@ app.use(function (err, req, res, next) {
     // render the error page
     res.status(err.status || 500);
     res.json({ status: err.status, errMessage: err.message });
-    //res.render("error");
 });
 
 module.exports = app;
