@@ -5,6 +5,7 @@ const asyncHandler = require("express-async-handler");
 const { body, validationResult } = require("express-validator");
 
 exports.getAllPostComments = asyncHandler(async (req, res, next) => {
+    // Get all comments for specific post
     const comments = await Comment.find(
         { postId: req.params.postId },
         "content user likes timeStamp"
@@ -13,7 +14,7 @@ exports.getAllPostComments = asyncHandler(async (req, res, next) => {
         .sort({ timeStamp: 1 })
         .exec();
 
-    res.json(comments);
+    res.json({ comments: comments });
 });
 
 exports.createPostComment = [
@@ -31,17 +32,17 @@ exports.createPostComment = [
         });
 
         if (!errors.isEmpty()) {
-            res.status(400).json({
+            return res.status(400).json({
                 content: req.body.content,
                 errors: errors.array(),
             });
-            return;
         } else {
             await comment.save();
             //Add comment to post
             await Post.findByIdAndUpdate(req.params.postId, {
                 $push: { comments: comment },
             }).exec();
+
             res.json({
                 commentId: comment._id,
                 message: "Comment saved successfully.",
@@ -50,6 +51,7 @@ exports.createPostComment = [
     }),
 ];
 
+// Comment contents can't be updated, only like can be updated
 exports.updateComment = [
     body("likes").optional(),
 
@@ -65,11 +67,13 @@ exports.updateComment = [
         } else {
             res.json({
                 message: "Comment likes updated successfully.",
+                commentId: comment._id,
             });
         }
     }),
 ];
 
+// Deletes comment and removes it from post
 exports.deleteComment = asyncHandler(async (req, res, next) => {
     const comment = await Comment.findOne({ _id: req.params.commentId }, "user")
         .populate("user", { name: 1 })
@@ -85,13 +89,14 @@ exports.deleteComment = asyncHandler(async (req, res, next) => {
         const comment = await Comment.findByIdAndDelete(
             req.params.commentId
         ).exec();
+
         await Post.findByIdAndUpdate(req.params.postId, {
             $pull: { comments: comment._id },
         }).exec();
 
         res.json({
             message: "Comment deleted successfully.",
-            comment: comment,
+            commentId: comment._id,
         });
     } else {
         res.status(403).json({ error: "Not authorized for this action." });

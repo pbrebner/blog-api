@@ -6,6 +6,7 @@ const asyncHandler = require("express-async-handler");
 const { body, validationResult } = require("express-validator");
 
 exports.getAllPosts = asyncHandler(async (req, res, next) => {
+    // Get all published posts
     const posts = await Post.find(
         { published: true },
         "title content image user timeStamp"
@@ -15,7 +16,7 @@ exports.getAllPosts = asyncHandler(async (req, res, next) => {
         .limit(20) // Limit to 20 for now
         .exec();
 
-    res.json(posts);
+    res.json({ posts: posts });
 });
 
 exports.createPost = [
@@ -42,17 +43,18 @@ exports.createPost = [
 
         if (!errors.isEmpty()) {
             // Inform client post had errors
-            res.status(400).json({
+            return res.status(400).json({
                 post: post,
                 errors: errors.array(),
             });
-            return;
         } else {
             await post.save();
+
             //Add post to user
             await User.findByIdAndUpdate(req.user._id, {
                 $push: { posts: post },
             }).exec();
+
             // Inform client post was saved
             res.json({ postId: post._id, message: "Post successfully saved." });
         }
@@ -68,7 +70,7 @@ exports.getPost = asyncHandler(async (req, res, next) => {
         // Inform client that not post was found
         res.status(404).json({ error: "Post not found" });
     } else {
-        res.json(post);
+        res.json({ post: post });
     }
 });
 
@@ -100,49 +102,39 @@ exports.updatePost = [
             });
         }
 
+        // TODO: SHOULDN'T THIS BE OR?
         if (req.body.title && req.body.content && req.body.published) {
+            // Post can only be updated by author
             if (post.user._id == req.user._id) {
                 if (!errors.isEmpty()) {
                     // Inform client post had errors
-                    res.status(400).json({
+                    return res.status(400).json({
                         post: {
                             title: req.body.title,
                             content: req.body.content,
                         },
                         errors: errors.array(),
                     });
-                    return;
                 } else {
+                    const post = await Post.findByIdAndUpdate(
+                        req.params.postId,
+                        {
+                            title: req.body.title,
+                            content: req.body.content,
+                            published: req.body.published,
+                        }
+                    ).exec();
+
+                    // Update post image if neccessary
                     if (req.body.image) {
-                        const post = await Post.findByIdAndUpdate(
-                            req.params.postId,
-                            {
-                                title: req.body.title,
-                                content: req.body.content,
-                                image: req.body.image,
-                                published: req.body.published,
-                            }
-                        ).exec();
-
-                        res.json({
-                            message: "Post updated successfully.",
-                            post: post,
-                        });
-                    } else {
-                        const post = await Post.findByIdAndUpdate(
-                            req.params.postId,
-                            {
-                                title: req.body.title,
-                                content: req.body.content,
-                                published: req.body.published,
-                            }
-                        ).exec();
-
-                        res.json({
-                            message: "Post updated successfully.",
-                            post: post,
-                        });
+                        post.image = req.body.image;
+                        await post.save();
                     }
+
+                    res.json({
+                        message: "Post updated successfully.",
+                        postId: post._id,
+                    });
                 }
             } else {
                 res.status(403).json({
@@ -158,6 +150,7 @@ exports.updatePost = [
 
             res.json({
                 message: "Post likes updated successfully.",
+                postId: post._id,
             });
         }
     }),
@@ -174,15 +167,20 @@ exports.deletePost = asyncHandler(async (req, res, next) => {
             .json({ error: `No post with id ${req.params.postId} exists` });
     }
 
+    // Only post author can delete post
     if (post.user._id == req.user._id) {
         const post = await Post.findByIdAndDelete(req.params.postId);
+
+        // Delete all post comments and remove post from user
         await Comment.deleteMany({
-            postId: req.params.postId,
+            postId: post._id,
         }).exec();
+
         await User.findByIdAndUpdate(req.user._id, {
-            $pull: { posts: req.params.postId },
+            $pull: { posts: post._id },
         }).exec();
-        res.json({ message: "Post deleted successfully", post: post });
+
+        res.json({ message: "Post deleted successfully", postId: post._id });
     } else {
         res.status(403).json({
             error: "Not authorized for this action.",
