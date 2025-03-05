@@ -2,6 +2,8 @@ const Post = require("../models/post");
 const User = require("../models/user");
 const Comment = require("../models/comment");
 
+const { deleteFileS3 } = require("../controllers/s3Controller");
+
 const asyncHandler = require("express-async-handler");
 const { body, validationResult } = require("express-validator");
 
@@ -102,7 +104,6 @@ exports.updatePost = [
             });
         }
 
-        // TODO: SHOULDN'T THIS BE OR?
         if (req.body.title && req.body.content && req.body.published) {
             // Post can only be updated by author
             if (post.user._id == req.user._id) {
@@ -170,6 +171,13 @@ exports.deletePost = asyncHandler(async (req, res, next) => {
     // Only post author can delete post
     if (post.user._id == req.user._id) {
         const post = await Post.findByIdAndDelete(req.params.postId);
+
+        // If image, delete from S3
+        if (post.image) {
+            const filename = post.image.split("/").pop();
+
+            await deleteFileS3(filename);
+        }
 
         // Delete all post comments and remove post from user
         await Comment.deleteMany({
