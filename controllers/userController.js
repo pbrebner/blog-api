@@ -2,6 +2,8 @@ const User = require("../models/user");
 const Post = require("../models/post");
 const Comment = require("../models/comment");
 
+const { deleteFileS3 } = require("../controllers/s3Controller");
+
 const asyncHandler = require("express-async-handler");
 const { body, validationResult } = require("express-validator");
 const bcrypt = require("bcryptjs");
@@ -12,7 +14,7 @@ exports.getAllUsers = asyncHandler(async (req, res, next) => {
         "name avatar memberStatus timeStamp"
     ).exec();
 
-    res.json(users);
+    res.json({ users: users });
 });
 
 exports.createUser = [
@@ -27,7 +29,7 @@ exports.createUser = [
                 );
             }
         })
-        .escape(),
+        .blacklist("<>"),
     body("username")
         .trim()
         .isLength({ min: 1 })
@@ -35,24 +37,53 @@ exports.createUser = [
         .isEmail()
         .withMessage("Username is not proper email format.")
         .custom(async (value) => {
+            // Check for characters not allowed and throw error if found
+            const errorValues = ["<", ">", "&", "'", '"', "/"];
+            let error = false;
+            errorValues.forEach((errorValue) => {
+                if (value.includes(errorValue)) {
+                    error = true;
+                }
+            });
+
+            if (error) {
+                throw new Error(
+                    "Email can't contain the following values: < > & ' \" /"
+                );
+            }
+
+            // Check if username is already in use
             const user = await User.find({ username: value }).exec();
             if (user.length > 0) {
                 throw new Error(
                     "Username is already in use, please use a different one."
                 );
             }
-        })
-        .escape(),
+        }),
     body("password", "Password must be a minimum of 6 characters.")
         .trim()
         .isLength({ min: 6 })
-        .escape(),
+        .custom((value) => {
+            // Check for characters not allowed and throw error if found
+            const errorValues = ["<", ">", "&", "'", '"', "/"];
+            let error = false;
+            errorValues.forEach((errorValue) => {
+                if (value.includes(errorValue)) {
+                    error = true;
+                }
+            });
+
+            if (error) {
+                throw new Error(
+                    "Password can't contain the following values: < > & ' \" /"
+                );
+            }
+        }),
     body("passwordConfirm", "Passwords must match.")
         .trim()
         .custom((value, { req }) => {
             return value === req.body.password;
-        })
-        .escape(),
+        }),
     asyncHandler(async (req, res, next) => {
         const errors = validationResult(req);
 
@@ -131,14 +162,28 @@ exports.updateUser = [
                     "Name is already in use, please use a different one."
                 );
             }
-        })
-        .escape(),
+        }),
     body("username", "Username must not be empty.")
         .trim()
         .isLength({ min: 1 })
         .isEmail()
         .withMessage("Username is not proper email format.")
         .custom(async (value, { req }) => {
+            // Check for characters not allowed and throw error if found
+            const errorValues = ["<", ">", "&", "'", '"', "/"];
+            let error = false;
+            errorValues.forEach((errorValue) => {
+                if (value.includes(errorValue)) {
+                    error = true;
+                }
+            });
+
+            if (error) {
+                throw new Error(
+                    "Email can't contain the following values: < > & ' \" /"
+                );
+            }
+
             const currentUser = await User.findById(req.user._id).exec();
             const user = await User.find({ username: value }).exec();
 
@@ -148,8 +193,7 @@ exports.updateUser = [
                     "Username is already in use, please use a different one."
                 );
             }
-        })
-        .escape(),
+        }),
     body(
         "userDescription",
         "User Description must be less than 300 characters."
@@ -159,7 +203,7 @@ exports.updateUser = [
         .blacklist("<>"),
     asyncHandler(async (req, res, next) => {
         //Confirm user is updating their own account
-        if (req.user._id === req.params.userId) {
+        if (req.user._id == req.params.userId) {
             const errors = validationResult(req);
 
             if (!errors.isEmpty()) {
@@ -200,23 +244,41 @@ exports.updateUser = [
 
 exports.deleteUser = asyncHandler(async (req, res, next) => {
     //Confirm user is deleting their own account
-    if (req.user._id === req.params.userId) {
-        const user = await User.findByIdAndDelete(req.user._id).exec();
+    if (req.user._id == req.params.userId) {
+        const user = await User.findById(req.user._id).exec();
 
         if (!user) {
             return res
                 .status(404)
                 .json({ error: `No user with id ${req.user._id} exists` });
         } else {
+            await User.findByIdAndDelete(req.user._id).exec();
+
+            // If avatar, delete from S3
+            if (user.avatar != process.env.AVATAR_DEFAULT_URL) {
+                const filename = user.avatar.split("/").pop();
+
+                await deleteFileS3(filename);
+            }
+
             const posts = await Post.deleteMany({ user: req.user._id }).exec();
-            const comments = await Comment.deleteMany({
+
+            // If the posts have images, delete from S3
+            posts.forEach(async (post) => {
+                if (post.image) {
+                    const filename = post.image.split("/").pop();
+
+                    await deleteFileS3(filename);
+                }
+            });
+
+            await Comment.deleteMany({
                 user: req.user._id,
             }).exec();
+
             res.json({
                 message: "User deleted successfully.",
-                user: user.name,
-                posts: posts,
-                comments: comments,
+                userId: user._id,
             });
         }
     } else {
