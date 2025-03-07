@@ -104,7 +104,7 @@ exports.updatePost = [
             });
         }
 
-        if (req.body.title && req.body.content && req.body.published) {
+        if (req.body.title && req.body.content) {
             // Post can only be updated by author
             if (post.user._id == req.user._id) {
                 if (!errors.isEmpty()) {
@@ -138,12 +138,13 @@ exports.updatePost = [
                     });
                 }
             } else {
-                res.status(403).json({
+                res.status(401).json({
                     error: "Not authorized for this action.",
                 });
             }
         }
 
+        // Handles update to likes
         if (req.body.likes) {
             const post = await Post.findByIdAndUpdate(req.params.postId, {
                 likes: req.body.likes,
@@ -190,7 +191,7 @@ exports.deletePost = asyncHandler(async (req, res, next) => {
 
         res.json({ message: "Post deleted successfully", postId: post._id });
     } else {
-        res.status(403).json({
+        res.status(401).json({
             error: "Not authorized for this action.",
         });
     }
