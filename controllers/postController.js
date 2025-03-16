@@ -11,7 +11,7 @@ exports.getAllPosts = asyncHandler(async (req, res, next) => {
     // Get all published posts
     const posts = await Post.find(
         { published: true },
-        "title content image user timeStamp"
+        "title content likes image user timeStamp"
     )
         .populate("user", { name: 1, avatar: 1 })
         .sort({ timeStamp: -1 })
