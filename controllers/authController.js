@@ -106,7 +106,7 @@ exports.login = (req, res) => {
                 res.cookie("jwt", refreshToken, {
                     httpOnly: true, // accessible only from web server
                     sameSite: "None",
-                    secure: true, // https
+                    secure: false, // https
                     maxAge: 7 * 24 * 60 * 60 * 1000, // Needs to match refresh expire
                 });
 
@@ -121,7 +121,7 @@ exports.logout = asyncHandler(async (req, res, next) => {
         res.clearCookie("jwt", {
             httpOnly: true,
             sameSite: "None",
-            secure: true,
+            secure: false,
         });
         return res.json({ message: "Logout Successful" });
     } else {
