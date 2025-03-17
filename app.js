@@ -13,7 +13,11 @@ const apiRouter = require("./routes/api");
 
 const app = express();
 
-app.use(cors());
+app.use(
+    cors({
+        origin: ["http://localhost:5173", "https://pbrebner.github.io"],
+    })
+);
 
 // Set up mongoose connection
 const mongoose = require("mongoose");
