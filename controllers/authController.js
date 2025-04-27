@@ -44,7 +44,7 @@ exports.refresh = (req, res, next) => {
             asyncHandler(async (err, decoded) => {
                 if (err) {
                     // Wrong Refesh Token
-                    return res.status(403).json({ message: "Invalid Token." });
+                    return res.status(401).json({ message: "Unauthorized." });
                 }
 
                 const user = await User.findById(
@@ -59,7 +59,7 @@ exports.refresh = (req, res, next) => {
                 const token = jwt.sign(
                     { user: user },
                     process.env.ACCESS_TOKEN_SECRET,
-                    { expiresIn: "20m" }
+                    { expiresIn: "7d" }
                 );
 
                 return res.json({ token: token });
@@ -92,7 +92,7 @@ exports.login = (req, res) => {
                 const token = jwt.sign(
                     { user: user },
                     process.env.ACCESS_TOKEN_SECRET,
-                    { expiresIn: "20m" }
+                    { expiresIn: "7d" }
                 );
 
                 // Create Refresh Token
@@ -125,6 +125,6 @@ exports.logout = asyncHandler(async (req, res, next) => {
         });
         return res.json({ message: "Logout Successful" });
     } else {
-        return res.sendStatus(204);
+        return res.status(204).json("No token, logout successful");
     }
 });
